@@ -1,0 +1,4 @@
+project_path: ./my-ts-project
+ignore:
+  - node_modules
+  - dist
