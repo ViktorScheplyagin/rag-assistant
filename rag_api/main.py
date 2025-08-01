@@ -117,3 +117,28 @@ async def rag_endpoint(req: RagRequest) -> RagResponse:
         answer = chat_resp.json()["choices"][0]["message"]["content"]
 
     return RagResponse(answer=answer)
+
+
+@app.post("/v1/chat/completions")
+async def zed_proxy(request: dict) -> dict:
+    """
+    OpenAI-compatible endpoint for Zed IDE.
+    Expects 'messages', 'model' and optionally 'editor_context'.
+    """
+    messages = request.get("messages", [])
+    question = messages[-1]["content"] if messages else ""
+    editor_context = request.get("editor_context", {})
+    target_file = editor_context.get("current_file", "index.ts")  # fallback
+    
+    rag_req = RagRequest(question=question, target_file=target_file)
+    response = await rag_endpoint(rag_req)
+    return {
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": response.answer
+                }
+            }
+        ]
+    }
